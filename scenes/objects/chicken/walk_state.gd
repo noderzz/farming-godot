@@ -9,6 +9,8 @@ extends NodeState
 var speed: float
 
 func _ready() -> void:
+	navigation_agent_2d.velocity_computed.connect(on_safe_velocity_computed)
+	
 	call_deferred("character_setup") # calls character_setup after the first physics frame
 	
 	
@@ -35,7 +37,17 @@ func _on_physics_process(_delta : float) -> void:
 	var target_position: Vector2 = navigation_agent_2d.get_next_path_position()
 	var target_direction: Vector2 = character.global_position.direction_to(target_position)
 	animated_sprite_2d.flip_h = target_direction.x < 0
-	character.velocity = target_direction * speed
+	
+	var velocity: Vector2 = target_direction * speed
+	
+	if navigation_agent_2d.avoidance_enabled:
+		navigation_agent_2d.velocity = velocity
+	else:
+		character.velocity = velocity
+		character.move_and_slide()
+	
+func on_safe_velocity_computed(safe_velocity: Vector2) -> void:
+	character.velocity = safe_velocity
 	character.move_and_slide()
 
 
